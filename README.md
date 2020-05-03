@@ -5,7 +5,7 @@ Build support for linux only.
 
 ### Game Programming in C++ Code
 
-This repository contains the source code for *Game Programming in C++* by 
+This repository contains source code forked from *Game Programming in C++* by 
 Sanjay Madhav.
 
   - [book's github repository]
