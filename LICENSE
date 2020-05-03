@@ -1,6 +1,49 @@
-This license applies to the code in the Chapter directories. The code in the
-External directory is licensed separately, see each subfolder for license
-details.
+### Game Programming in C++ by Sanjay Madhav
+
+This license applies to the files explicitly listed: 
+  
+  src/InputComponent.h
+  src/VertexArray.h
+  src/SpriteComponent.cpp
+  src/Math.h
+  src/VertexArray.cpp
+  src/Texture.cpp
+  src/Component.h
+  src/Game.h
+  src/Component.cpp
+  src/MoveComponent.h
+  src/Asteroid.h
+  src/Laser.h
+  src/Math.cpp
+  src/Actor.h
+  src/Ship.cpp
+  src/MoveComponent.cpp
+  src/SpriteComponent.h
+  src/CircleComponent.cpp
+  src/Shader.cpp
+  src/Asteroid.cpp
+  src/Laser.cpp
+  src/Game.vcxproj
+  src/Shader.h
+  src/Ship.h
+  src/Game.vcxproj.filters
+  src/Texture.h
+  src/InputComponent.cpp
+  src/Main.cpp
+  src/Random.h
+  src/Actor.cpp
+  src/CircleComponent.h
+  src/Game.cpp
+  src/Shaders/Basic.frag
+  src/Shaders/Basic.vert
+  src/Shaders/Sprite.vert
+  src/Shaders/Transform.vert
+  src/Shaders/Sprite.frag
+  src/Random.cpp
+  src/Assets/ShipWithThrust.png
+  src/Assets/Ship.png
+  src/Assets/Laser.png
+  src/Assets/Asteroid.png
 
 Copyright (c) 2017, Sanjay Madhav
 All rights reserved.
