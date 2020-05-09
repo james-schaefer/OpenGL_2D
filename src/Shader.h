@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------
 
 #pragma once
-#include <GL/glew.h>
+#include <GL/gl3w.h>
 #include <string>
 #include "Math.h"
 

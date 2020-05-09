@@ -11,3 +11,8 @@ Release/
 Chapter14/Assets/Saved.gplevel
 Chapter14/Assets/*.bin
 External/FMOD
+*.o 
+*.swp
+src/game
+src/dear_imgui/libdearimgui.a
+error.txt

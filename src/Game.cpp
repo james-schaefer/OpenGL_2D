@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------
 
 #include "Game.h"
-#include <GL/glew.h>
 #include "Texture.h"
 #include "VertexArray.h"
 #include "Shader.h"
@@ -18,6 +17,10 @@
 #include "Ship.h"
 #include "Asteroid.h"
 #include "Random.h"
+#include "imgui.h"
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_opengl3.h"
+#include <GL/gl3w.h>
 
 Game::Game()
 :mWindow(nullptr)
@@ -30,7 +33,10 @@ Game::Game()
 
 bool Game::Initialize()
 {
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) != 0)
+	if (SDL_Init(SDL_INIT_VIDEO
+                    |SDL_INIT_AUDIO
+                    |SDL_INIT_TIMER
+                    |SDL_INIT_GAMECONTROLLER) != 0)
 	{
 		SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
 		return false;
@@ -38,43 +44,40 @@ bool Game::Initialize()
 	
 	// Set OpenGL attributes
 	// Use the core OpenGL profile
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+	                    SDL_GL_CONTEXT_PROFILE_CORE);
+
+	// Decide GL+GLSL versions   // GL 3.0 + GLSL 130
+	const char* glsl_version = "#version 130";
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	// Specify version 3.3
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	// Request a color buffer with 8-bits per RGBA channel
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	// Enable double buffering
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	// Force OpenGL to use hardware acceleration
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	
-	mWindow = SDL_CreateWindow("Game Programming in C++ (Chapter 5)", 100, 100,
-							   1024, 768, SDL_WINDOW_OPENGL);
-	if (!mWindow)
-	{
-		SDL_Log("Failed to create window: %s", SDL_GetError());
-		return false;
-	}
+	// Create window with graphics context
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	mWindow = SDL_CreateWindow("Dear ImGui SDL2+OpenGL3 example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1024, window_flags);
+	SDL_GLContext mContext = SDL_GL_CreateContext(mWindow);
+	SDL_GL_MakeCurrent(mWindow, mContext);
+	SDL_GL_SetSwapInterval(1); // Enable vsync
 	
 	// Create an OpenGL context
 	mContext = SDL_GL_CreateContext(mWindow);
-	
-	// Initialize GLEW
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK)
+	SDL_GL_MakeCurrent(mWindow, mContext);
+	SDL_GL_SetSwapInterval(1); // Enable vsync
+
+	// Initialize OpenGL loader
+	bool err = gl3wInit() != 0;
+	if (err)
 	{
-		SDL_Log("Failed to initialize GLEW.");
-		return false;
+		fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+		return 1;
 	}
-	
-	// On some platforms, GLEW will emit a benign error code,
-	// so clear it
-	glGetError();
-	
+
 	// Make sure we can create/compile shaders
 	if (!LoadShaders())
 	{
@@ -86,6 +89,23 @@ bool Game::Initialize()
 	CreateSpriteVerts();
 
 	LoadData();
+
+	// Setup Dear ImGui context 
+	IMGUI_CHECKVERSION(); 
+	ImGui::CreateContext(); 
+	mio = ImGui::GetIO();
+	
+	// Setup Dear ImGui style 
+	ImGui::StyleColorsDark(); 
+	
+	// Setup Platform/Renderer bindings 
+	ImGui_ImplSDL2_InitForOpenGL(mWindow, mContext); 
+	ImGui_ImplOpenGL3_Init(glsl_version); 
+	
+	// Scale up ImGui for a high dpi monitor. 
+	constexpr double scale_factor = 3;  
+	ImGui::GetStyle().ScaleAllSizes(scale_factor); 
+	ImGui::GetIO().FontGlobalScale = scale_factor; 
 
 	mTicksCount = SDL_GetTicks();
 	
@@ -107,12 +127,18 @@ void Game::ProcessInput()
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
-		switch (event.type)
-		{
-			case SDL_QUIT:
-				mIsRunning = false;
-				break;
-		}
+	  ImGui_ImplSDL2_ProcessEvent(&event);
+	  switch (event.type)
+	  {
+	    case SDL_QUIT:
+	      mIsRunning = false;
+	      break;
+	    case SDL_WINDOWEVENT :
+	      if (   event.window.event == SDL_WINDOWEVENT_CLOSE 
+                  && event.window.windowID == SDL_GetWindowID(mWindow))
+	        mIsRunning = false;
+	      break;
+	  }
 	}
 	
 	const Uint8* keyState = SDL_GetKeyboardState(NULL);
@@ -195,6 +221,19 @@ void Game::GenerateOutput()
 	{
 		sprite->Draw(mSpriteShader);
 	}
+
+	// ImGui 
+        // Start the Dear ImGui frame                                            
+        ImGui_ImplOpenGL3_NewFrame();                                            
+        ImGui_ImplSDL2_NewFrame(mWindow);                                         
+        ImGui::NewFrame();
+
+	bool show = true;
+	ImGui::ShowDemoWindow(&show);	
+
+        // Rendering                                                             
+        ImGui::Render();                                                         
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
 	// Swap the buffers
 	SDL_GL_SwapWindow(mWindow);

@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include "Math.h"
+#include "imgui.h"
 
 class Game
 {
@@ -60,6 +61,7 @@ private:
 
 	SDL_Window* mWindow;
 	SDL_GLContext mContext;
+	ImGuiIO mio;
 	Uint32 mTicksCount;
 	bool mIsRunning;
 	// Track if we're updating actors right now
